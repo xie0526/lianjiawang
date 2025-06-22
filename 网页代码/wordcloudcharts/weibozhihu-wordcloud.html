@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>上海租房词云图</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2/dist/echarts-wordcloud.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #2a2a2a;
+    }
+    #main {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="main"></div>
+
+  <script>
+    const chart = echarts.init(document.getElementById('main'));
+
+    const colors = [
+      '#ff7e5f', '#ffd166', '#3a86ff', '#4bc0c0', 
+      '#90be6d', '#f8971c', '#f67280', '#c06c84'
+    ];
+
+    const img = new Image();
+    img.src = 'house.png';
+
+    img.onload = () => {
+      fetch('merged_word_freq.json')
+        .then(res => res.json())
+        .then(data => {
+          // 过滤掉频率小于50的数据
+          const filteredData = data.filter(item => item.value >= 50);
+          
+          chart.setOption({
+            tooltip: {
+              show: true,
+              backgroundColor: 'rgba(255,255,255,0.9)',
+              textStyle: { color: '#121212' },
+              borderColor: '#ffd166',
+              borderWidth: 1,
+              padding: 12,
+              formatter: params => `关键词：${params.name}<br>频率：${params.value}`
+            },
+            series: [{
+              type: 'wordCloud',
+              maskImage: img,
+              gridSize: 6,
+              sizeRange: [18, 130],
+              rotationRange: [0, 0],
+              rotationStep: 0,
+              shape: 'circle',
+              drawOutOfBound: false,
+              layoutAnimation: true,
+              textStyle: {
+                fontFamily: 'Noto Sans SC, Microsoft YaHei, sans-serif',
+                fontWeight: 'bold',
+                color: () => colors[Math.floor(Math.random() * colors.length)]
+              },
+              emphasis: {
+                textStyle: {
+                  shadowBlur: 25,
+                  shadowColor: '#ffd166',
+                  fontWeight: '900',
+                  color: '#ff4500',
+                  textShadow: '0 0 10px rgba(255,209,102,0.7)'
+                }
+              },
+              data: filteredData.sort((a, b) => b.value - a.value)
+            }]
+          });
+        });
+    };
+
+    img.onerror = () => {
+      chart.setOption({
+        series: [{
+          type: 'wordCloud',
+          gridSize: 6,
+          sizeRange: [18, 100],
+          textStyle: { color: '#fff' },
+          data: [
+            {name: '加载失败', value: 100},
+            {name: '请检查', value: 80},
+            {name: 'house.png', value: 60},
+            {name: '文件路径', value: 40}
+          ]
+        }]
+      });
+    };
+  </script>
+</body>
+</html>
+    

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>上海各行政区租金图表</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #121212;
+      font-family: "微软雅黑", Arial, sans-serif;
+      overflow: hidden;
+    }
+    #main {
+      width: 100%;
+      max-width: 720px;
+      height: 510px;
+      margin: 18px auto 8px auto;
+      position: relative;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 14px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      padding: 20px 30px 10px 30px;
+    }
+    #toggle-btn {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      z-index: 10;
+      padding: 7px 18px;
+      font-size: 14px;
+      font-family: "Helvetica Neue", "微软雅黑", sans-serif;
+      font-weight: 600;
+      background: linear-gradient(135deg, #3a4d63, #2b394c);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    #toggle-btn:hover {
+      background: linear-gradient(135deg, #4c627d, #35465c);
+      transform: scale(1.04);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+<div id="main">
+  <button id="toggle-btn">切换为条形图</button>
+  <div id="chart" style="width: 100%; height: 100%;"></div>
+</div>
+
+<script>
+  const chart = echarts.init(document.getElementById('chart'));
+
+  const data = [
+    { name: '黄浦区', value: 153.35 },
+    { name: '长宁区', value: 140.24 },
+    { name: '静安区', value: 131.14 },
+    { name: '徐汇区', value: 127.35 },
+    { name: '虹口区', value: 122.09 },
+    { name: '杨浦区', value: 118.15 },
+    { name: '普陀区', value: 117.71 },
+    { name: '浦东新区', value: 106.8 },
+    { name: '闵行区', value: 88.97 },
+    { name: '宝山区', value: 88.04 },
+    { name: '嘉定区', value: 75.26 },
+    { name: '青浦区', value: 71.88 },
+    { name: '松江区', value: 71.36 },
+    { name: '奉贤区', value: 31.84 },
+    { name: '崇明区', value: 27.84 },
+    { name: '金山区', value: 27.53 }
+  ];
+
+  const maxVal = Math.ceil(Math.max(...data.map(d => d.value)) / 10) * 10;
+  const indicators = data.map(d => ({ name: d.name, max: maxVal }));
+  const values = data.map(d => d.value);
+  const labels = data.map(d => d.name);
+
+  function getRadarOption() {
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: '上海各行政区租金水平（元/月/㎡）',
+        left: 'center',
+        top: 18,
+        textStyle: {
+          fontSize: 24,
+          fontWeight: '700',
+          color: '#333'
+        }
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: function (params) {
+          return params.name + '<br/>' + params.value.map((v, i) => `${indicators[i].name}：${v}`).join('<br/>');
+        }
+      },
+      legend: {
+        data: ['租金（元/月/㎡）'],
+        orient: 'vertical',
+        left: 8,
+        top: 'middle',
+        textStyle: {
+          fontSize: 14,
+          color: '#444',
+          fontWeight: '600'
+        }
+      },
+      radar: {
+        indicator: indicators,
+        shape: 'polygon',
+        splitNumber: 5,
+        radius: '60%',
+        axisName: {
+          color: '#333',
+          fontSize: 13,
+          fontWeight: '500',
+          formatter: val => val.length > 3 ? val.slice(0, 3) + '\n' + val.slice(3) : val
+        },
+        splitLine: {
+          lineStyle: { color: ['#ccc'] }
+        },
+        splitArea: {
+          areaStyle: { color: ['#f9f9f9', '#ffffff'] }
+        },
+        axisLine: {
+          lineStyle: { color: '#aaa' }
+        }
+      },
+      series: [{
+        name: '租金水平',
+        type: 'radar',
+        labelLayout: { hideOverlap: true },
+        data: [{
+          value: values,
+          name: '租金（元/月/㎡）',
+          areaStyle: { color: 'rgba(33, 150, 243, 0.3)' },
+          lineStyle: { color: '#1e88e5', width: 3 },
+          symbol: 'circle',
+          symbolSize: 8,
+          itemStyle: { color: '#0d47a1' },
+          label: {
+            show: true,
+            fontSize: 12,
+            color: '#1a237e',
+            fontWeight: 'bold',
+            formatter: (params) => params.value
+          }
+        }]
+      }]
+    };
+  }
+
+  function getBarOption() {
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: '上海各行政区租金水平（元/月/㎡）',
+        left: 'center',
+        top: 18,
+        textStyle: {
+          fontSize: 24,
+          fontWeight: '700',
+          color: '#333'
+        }
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      grid: {
+        left: '10%',
+        right: '10%',
+        bottom: '15%',
+        top: '25%'
+      },
+      xAxis: {
+        type: 'category',
+        data: labels,
+        axisLabel: {
+          rotate: 45,
+          fontSize: 12,
+          color: '#555'
+        },
+        axisLine: {
+          lineStyle: { color: '#888' }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        name: '元/月/㎡',
+        axisLine: {
+          lineStyle: { color: '#888' }
+        },
+        splitLine: {
+          lineStyle: { type: 'dashed', color: '#ccc' }
+        }
+      },
+      series: [{
+        name: '租金',
+        type: 'bar',
+        data: values,
+        label: {
+          show: true,
+          position: 'top',
+          color: '#4a148c',
+          fontWeight: 'bold',
+          fontSize: 12
+        },
+        itemStyle: {
+          borderRadius: 4,
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#64b5f6' },
+            { offset: 1, color: '#8e24aa' }
+          ])
+        }
+      }]
+    };
+  }
+
+  let current = 'radar';
+  chart.setOption(getRadarOption());
+
+  document.getElementById('toggle-btn').addEventListener('click', () => {
+    if (current === 'radar') {
+      chart.setOption(getBarOption(), true);
+      document.getElementById('toggle-btn').innerText = '切换为雷达图';
+      current = 'bar';
+    } else {
+      chart.setOption(getRadarOption(), true);
+      document.getElementById('toggle-btn').innerText = '切换为条形图';
+      current = 'radar';
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    chart.resize();
+  });
+</script>
+
+</body>
+</html>

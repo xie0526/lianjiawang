@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>上海各行政区租金雷达图</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #efecec;
+      font-family: "微软雅黑", Arial, sans-serif;
+    }
+    #main {
+      width: 100%;
+      max-width: 900px;
+      height: 700px;
+      margin: 40px auto;
+      background: rgba(255, 255, 255, 0.75);
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      padding: 20px 40px 40px 40px;
+    }
+  </style>
+</head>
+<body>
+  <div id="main"></div>
+  <script>
+    const chart = echarts.init(document.getElementById('main'));
+
+    const data = [
+      { name: '黄埔', value: 153.35 },
+      { name: '长宁', value: 140.24 },
+      { name: '静安', value: 131.14 },
+      { name: '徐汇', value: 127.35 },
+      { name: '虹口', value: 122.09 },
+      { name: '杨浦', value: 118.15 },
+      { name: '普陀', value: 117.71 },
+      { name: '浦东', value: 106.8 },
+      { name: '闵行', value: 88.97 },
+      { name: '宝山', value: 88.04 },
+      { name: '嘉定', value: 75.26 },
+      { name: '青浦', value: 71.88 },
+      { name: '松江', value: 71.36 },
+      { name: '奉贤', value: 31.84 },
+      { name: '崇明', value: 27.84 },
+      { name: '金山', value: 27.53 }
+    ];
+
+    const maxVal = Math.ceil(Math.max(...data.map(d => d.value)) / 10) * 10;
+    const indicators = data.map(d => ({
+      name: d.name,
+      max: maxVal
+    }));
+    const values = data.map(d => d.value);
+
+    const option = {
+      backgroundColor: 'transparent',
+      title: [
+        {
+          text: '上海各行政区租金水平（元/月/㎡）',
+          left: 'center',
+          top: 20,
+          textStyle: {
+            fontSize: 24,
+            fontWeight: '700',
+            color: '#333'
+          }
+        },
+        {
+          text: '数据来源：2025年房源租金统计',
+          left: 'center',
+          top: 55,
+          textStyle: {
+            fontSize: 13,
+            color: '#666'
+          }
+        }
+      ],
+      tooltip: {
+        trigger: 'item',
+        formatter: function (params) {
+          return params.name + '<br/>' + params.value.map((v, i) => `${indicators[i].name}：${v}`).join('<br/>');
+        }
+      },
+      legend: {
+        data: ['租金（元/月/㎡）'],
+        bottom: 10,
+        left: 'center',
+        textStyle: {
+          fontSize: 14,
+          color: '#333',
+          fontWeight: '600'
+        }
+      },
+      radar: {
+        indicator: indicators,
+        shape: 'polygon',
+        splitNumber: 5,
+        radius: '60%',
+        axisName: {
+          color: '#444',
+          fontSize: 13,
+          fontWeight: '500',
+          formatter: value => value.length > 3 ? value.slice(0,3) + '\n' + value.slice(3) : value
+        },
+        splitLine: {
+          lineStyle: {
+            color: ['#ccc']
+          }
+        },
+        splitArea: {
+          areaStyle: {
+            color: ['#f7f7f7', '#ffffff']
+          }
+        },
+        axisLine: {
+          lineStyle: {
+            color: '#bbb'
+          }
+        }
+      },
+      series: [{
+        name: '租金水平',
+        type: 'radar',
+        animationDuration: 1200,
+        animationEasing: 'cubicOut',
+        emphasis: {
+          focus: 'self',
+          lineStyle: { width: 5 }
+        },
+        labelLayout: {
+          hideOverlap: true
+        },
+        data: [{
+          value: values,
+          name: '租金（元/月/㎡）',
+          areaStyle: {
+            color: 'rgba(33, 150, 243, 0.35)'
+          },
+          lineStyle: {
+            color: '#2196F3',
+            width: 3
+          },
+          symbol: 'circle',
+          symbolSize: 8,
+          itemStyle: {
+            color: '#1565c0'
+          },
+          label: {
+            show: true,
+            fontSize: 12,
+            color: '#0d47a1',
+            fontWeight: 'bold',
+            formatter: (params) => params.value
+          }
+        }]
+      }]
+    };
+
+    chart.setOption(option);
+
+    window.addEventListener('resize', () => {
+      chart.resize();
+    });
+  </script>
+</body>
+</html>

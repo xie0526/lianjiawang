@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>上海行政区图表切换模块</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    .shanghai-chart-module {
+      max-width: 900px;
+      margin: 20px auto;
+      border-radius: 12px;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background-color: #f3e4e4; /* 由 rgba 改为纯白 */
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+      position: relative;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .shanghai-chart-module .title {
+      background-color: #f3e4e4; /* 保持一致 */
+      padding: 8px 0;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 12px;
+      user-select: none;
+      border-radius: 8px 8px 0 0;
+    }
+    .shanghai-chart-module .toolbar {
+      display: flex;
+      justify-content: space-between;
+      max-width: 300px;
+      margin: 0 auto 16px auto;
+      align-items: center;
+    }
+    .shanghai-chart-module .btn {
+      padding: 6px 14px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      background-color: #3f51b5;
+      color: #f3e4e4;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .shanghai-chart-module .btn:hover {
+      background-color: #5c6bc0;
+    }
+    .shanghai-chart-module .mode-label {
+      font-size: 14px;
+      color: #222;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .shanghai-chart-module #main {
+      height: 440px;
+      width: 100%;
+      background-color: #f3e4e4; /* 与容器一致 */
+      border-radius: 0 0 12px 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <section class="shanghai-chart-module" aria-label="上海行政区租房数据图表模块">
+    <div class="title">2025年5月上海各行政区租房房源数据分布</div>
+    <div class="toolbar">
+      <button class="btn" id="toggleBtn">📊 切换图表</button>
+      <div class="mode-label" id="modeLabel">当前模式：🗺️ 地图</div>
+    </div>
+    <div id="main"></div>
+  </section>
+
+  <script>
+  (function() {
+    const rawData = [
+      { name: '静安区', value: 3364 },
+      { name: '徐汇区', value: 3754 },
+      { name: '黄浦区', value: 1596 },
+      { name: '长宁区', value: 2418 },
+      { name: '普陀区', value: 3181 },
+      { name: '浦东新区', value: 13792 },
+      { name: '宝山区', value: 4133 },
+      { name: '虹口区', value: 1699 },
+      { name: '杨浦区', value: 3067 },
+      { name: '闵行区', value: 6848 },
+      { name: '金山区', value: 478 },
+      { name: '嘉定区', value: 3896 },
+      { name: '崇明区', value: 456 },
+      { name: '奉贤区', value: 1171 },
+      { name: '松江区', value: 3608 },
+      { name: '青浦区', value: 2295 }
+    ];
+
+    const chartDom = document.querySelector('.shanghai-chart-module #main');
+    const chart = echarts.init(chartDom);
+    let currentMode = 'map';
+
+    const toggleBtn = document.querySelector('.shanghai-chart-module #toggleBtn');
+    const modeLabel = document.querySelector('.shanghai-chart-module #modeLabel');
+
+    function updateModeLabel() {
+      modeLabel.innerText = `当前模式：${currentMode === 'map' ? '🗺️ 地图' : '📊 柱状图'}`;
+    }
+
+    function renderMap() {
+      currentMode = 'map';
+      updateModeLabel();
+      chart.clear();
+      chart.setOption({
+        backgroundColor: '#ffffff', // 统一白底
+        tooltip: {
+          trigger: 'item',
+          formatter: p => `${p.name}<br/>数量：<b>${p.value || 0}</b>`
+        },
+        visualMap: {
+          min: 400,
+          max: 14000,
+          left: '3%',
+          bottom: 20,
+          text: ['多', '少'],
+          inRange: {
+            color: ['#e0f3f8', '#abd9e9', '#ffffbf', '#fdae61', '#d7191c']
+          },
+          calculable: true
+        },
+        series: [{
+          id: 'shData',
+          type: 'map',
+          map: 'shanghai',
+          roam: false,
+          universalTransition: true,
+          label: { show: false },
+          emphasis: {
+            label: { show: true },
+            itemStyle: { areaColor: '#fff59d' }
+          },
+          itemStyle: { borderColor: '#999' },
+          data: rawData
+        }]
+      });
+    }
+
+    function renderBar() {
+      currentMode = 'bar';
+      updateModeLabel();
+      chart.clear();
+      const sorted = [...rawData].sort((a, b) => a.value - b.value);
+      const maxVal = Math.max(...sorted.map(i => i.value));
+      const minVal = Math.min(...sorted.map(i => i.value));
+
+      function getColor(value) {
+        const cold = [37, 106, 165];
+        const warm = [215, 25, 28];
+        const ratio = (value - minVal) / (maxVal - minVal);
+        const r = Math.round(cold[0] + ratio * (warm[0] - cold[0]));
+        const g = Math.round(cold[1] + ratio * (warm[1] - cold[1]));
+        const b = Math.round(cold[2] + ratio * (warm[2] - cold[2]));
+        return `rgb(${r},${g},${b})`;
+      }
+
+      chart.setOption({
+        backgroundColor: '#ffffff', // 统一白底
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' }
+        },
+        xAxis: {
+          type: 'value',
+          name: '数量',
+          nameTextStyle: { fontWeight: 'bold' }
+        },
+        yAxis: {
+          type: 'category',
+          data: sorted.map(i => i.name),
+          axisLabel: {
+            rotate: 30,
+            color: '#444',
+            fontWeight: 'bold'
+          }
+        },
+        series: [{
+          id: 'shData',
+          type: 'bar',
+          universalTransition: true,
+          data: sorted.map(i => ({
+            value: i.value,
+            itemStyle: {
+              color: getColor(i.value),
+              borderRadius: [4, 4, 0, 0]
+            }
+          }))
+        }]
+      });
+    }
+
+    function init() {
+      fetch('https://geo.datav.aliyun.com/areas/bound/310000_full.json')
+        .then(res => res.json())
+        .then(geoJson => {
+          echarts.registerMap('shanghai', geoJson);
+          renderMap();
+        });
+
+      toggleBtn.addEventListener('click', () => {
+        toggleBtn.innerText = currentMode === 'map' ? '🗺️ 切换地图' : '📊 切换图表';
+        currentMode === 'map' ? renderBar() : renderMap();
+      });
+
+      window.addEventListener('resize', () => {
+        chart.resize();
+      });
+    }
+
+    init();
+  })();
+  </script>
+
+</body>
+</html>

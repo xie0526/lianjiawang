@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>价格区间租房数量分布</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #2a2a2a;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    #chart {
+      width: 600px;
+      height: 400px;
+      margin: 30px auto 40px auto; /* 上边距30px，比之前更靠上 */
+      background: #ffffffdd;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(240, 238, 238, 0.12);
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
+
+  <script>
+    const chart = echarts.init(document.getElementById('chart'));
+
+    const data = [
+      { name: '<1500元', value: 774 },
+      { name: '1500-2500元', value: 4791 },
+      { name: '2500-3500元', value: 8453 },
+      { name: '3500-4500元', value: 12171 },
+      { name: '4500-5500元', value: 11368 },
+      { name: '≥5500元', value: 22942 }
+    ];
+
+    chart.setOption({
+      backgroundColor: 'transparent',
+      title: {
+        text: '上海各租金区间房源数量（2025年5月）',
+        left: 'center',
+        top: 5,  // 位置往上移
+        textStyle: {
+          fontSize: 18,  // 字号调大一点
+          fontWeight: 'bold',
+          color: '#333',
+          textShadowColor: 'transparent'  // 取消标题阴影（默认无，这行是保险）
+        }
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: '{b}<br/>数量: {c}<br/>占比: {d}%'
+      },
+      legend: {
+        orient: 'vertical',
+        right: 10,
+        top: 'middle',
+        textStyle: { fontSize: 12 }
+      },
+      series: [{
+        type: 'pie',
+        radius: ['40%', '68%'],
+        center: ['42%', '50%'],
+        avoidLabelOverlap: true,
+        itemStyle: {
+          borderRadius: 6,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: true,
+          position: 'outside',
+          formatter: '{b}\n{d}%',
+          fontSize: 12,
+          textShadowColor: 'transparent'  // 去除标签阴影
+        },
+        labelLine: {
+          length: 14,
+          length2: 8
+        },
+        data: data,
+        color: ['#c23531', '#f39c12', '#2f4554', '#61a0a8', '#91c7ae', '#749f83']
+      }]
+    });
+
+    window.addEventListener('resize', () => {
+      chart.resize();
+    });
+  </script>
+</body>
+</html>

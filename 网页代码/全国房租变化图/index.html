@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>全国房租中位数走势（2024-2025）</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #121212;
+      font-family: "微软雅黑", Arial, sans-serif;
+      overflow: hidden;
+    }
+    #main {
+      width: 600px;
+      max-width: 960px;
+      height: 300px;
+      margin: 50px auto;
+      background: #f8fbff; /* ✅ 柔和淡蓝背景 */
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(235, 202, 202, 0.08);
+      padding: 20px 30px;
+    }
+  </style>
+</head>
+<body>
+  <div id="main"></div>
+  <script>
+    const chart = echarts.init(document.getElementById('main'));
+
+    const rawData = [
+      ['2024-5', 1900],
+      ['2024-6', 1900],
+      ['2024-7', 1900],
+      ['2024-8', 1830],
+      ['2024-9', 1800],
+      ['2024-10', 1800],
+      ['2024-11', 1800],
+      ['2024-12', 1850],
+      ['2025-1', 1833],
+      ['2025-2', 1800],
+      ['2025-3', 1800],
+      ['2025-4', 1800],
+      ['2025-5', 1833]
+    ];
+
+    const months = rawData.map(d => d[0]);
+    const values = rawData.map(d => d[1]);
+
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+    const yMin = Math.floor(minVal * 0.98);
+    const yMax = Math.ceil(maxVal * 1.02);
+
+    const option = {
+      backgroundColor: 'transparent',
+      title: [
+        {
+          text: '全国房租中位数走势（2024年5月 - 2025年5月）',
+          left: 'center',
+          top: '2%',
+          textStyle: {
+            fontSize: 18, // ✅ 字体加大
+            fontWeight: 'bold',
+            color: '#333'
+          }
+        },
+      ],
+      tooltip: {
+        trigger: 'axis',
+        formatter: function (params) {
+          const p = params[0];
+          return `${p.axisValue}<br/>房租中位数：${p.data} 元/月`;
+        },
+        axisPointer: {
+          type: 'line',
+          lineStyle: {
+            color: '#666',
+            width: 1
+          }
+        }
+      },
+      grid: {
+        left: '8%',
+        right: '6%',
+        bottom: '20%',
+        top: '18%'
+      },
+      xAxis: {
+        type: 'category',
+        data: months,
+        boundaryGap: false,
+        axisLine: { lineStyle: { color: '#666' } },
+        axisLabel: { fontSize: 13 }
+      },
+      yAxis: {
+        type: 'value',
+        name: '元/月',
+        min: yMin,
+        max: yMax,
+        axisLine: { lineStyle: { color: '#666' } },
+        axisLabel: { fontSize: 13 },
+        splitLine: {
+          lineStyle: {
+            type: 'dashed',
+            color: '#ccc'
+          }
+        }
+      },
+      dataZoom: [
+        {
+          type: 'slider',
+          start: 0,
+          end: 100,
+          height: 20,
+          bottom: 10,
+          textStyle: {
+            color: '#666'
+          }
+        }
+      ],
+      series: [
+        {
+          name: '房租中位数',
+          type: 'line',
+          smooth: true,
+          data: values,
+          symbol: 'circle',
+          symbolSize: 7,
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              borderColor: '#0d47a1',
+              borderWidth: 3
+            }
+          },
+          lineStyle: {
+            color: '#0d47a1',
+            width: 3
+          },
+          itemStyle: {
+            color: '#0d47a1'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(13, 71, 161, 0.5)' },
+              { offset: 1, color: 'rgba(13, 71, 161, 0.1)' }
+            ])
+          }
+        }
+      ]
+    };
+
+    chart.setOption(option);
+    window.addEventListener('resize', () => {
+      chart.resize();
+    });
+  </script>
+</body>
+</html>

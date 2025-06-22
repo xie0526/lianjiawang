@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>上海房源朝向分布</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: transparent;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .chart-wrapper {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(149, 147, 147, 0.3);
+    }
+
+    #barChart {
+      width: 600px;
+      height: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div class="chart-wrapper">
+    <div id="barChart"></div>
+  </div>
+
+  <script>
+    const data = [
+      { name: '东', value: 2579 },
+      { name: '南', value: 47909 },
+      { name: '西', value: 2190 },
+      { name: '北', value: 9810 },
+      { name: '南北', value: 50483 }
+    ];
+
+    const colors = {
+      '东': '#5DADE2',
+      '南': '#E74C3C',
+      '西': '#58D68D',
+      '北': '#2E86C1',
+      '南北': '#F1C40F'
+    };
+
+    const chart = echarts.init(document.getElementById('barChart'));
+
+    chart.setOption({
+      backgroundColor: 'transparent',
+      title: {
+        text: '2025年5月上海租房房源朝向分布',
+        left: 'center',
+        top: 10,
+        textStyle: {
+          fontSize: 18,
+          fontWeight: 'bold',
+          color: '#ffffff'
+        }
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        formatter: p => `${p[0].name}<br/>数量: <b>${p[0].value}</b>`
+      },
+      grid: {
+        left: '15%',
+        right: '10%',
+        bottom: '10%',
+        top: '20%'
+      },
+      xAxis: {
+        type: 'value',
+        name: '数量',
+        nameTextStyle: { fontWeight: 'bold', color: '#ccc' },
+        axisLine: { lineStyle: { color: '#888' } },
+        axisLabel: { color: '#ddd' }
+      },
+      yAxis: {
+        type: 'category',
+        data: data.map(i => i.name),
+        axisLabel: {
+          fontWeight: 'bold',
+          color: '#eee',
+          fontSize: 13
+        },
+        axisLine: { lineStyle: { color: '#888' } }
+      },
+      series: [{
+        type: 'bar',
+        data: data.map(item => ({
+          value: item.value,
+          itemStyle: {
+            color: colors[item.name],
+            borderRadius: [6, 6, 6, 6]
+          },
+          name: item.name,
+          label: {
+            show: true,
+            position: 'right',
+            color: '#fff',
+            fontWeight: 'bold'
+          }
+        })),
+        barWidth: '50%'
+      }]
+    });
+
+    window.addEventListener('resize', () => {
+      chart.resize();
+    });
+  </script>
+</body>
+</html>
