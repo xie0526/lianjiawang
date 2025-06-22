@@ -197,7 +197,7 @@
     }
 
     function init() {
-      fetch('https://geo.datav.aliyun.com/areas/bound/310000_full.json')
+      fetch('310000_full.json')
         .then(res => res.json())
         .then(geoJson => {
           echarts.registerMap('shanghai', geoJson);
