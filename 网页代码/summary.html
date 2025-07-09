@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>上海租房数据分析总结</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
+    :root {
+      --primary-color: #ffd166;
+      --secondary-color: #ef476f;
+      --dark-bg: #121212;
+      --medium-bg: #2a2a2a;
+      --light-bg: #414141;
+      --text-color: #eaeaea;
+      --accent-color: #06d6a0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+      background-color: var(--dark-bg);
+      color: var(--text-color);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* 开场标题区 */
+    .title-section {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .hero-bg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      filter: grayscale(40%) brightness(0.7);
+      transition: filter 1.8s ease, opacity 1.8s ease;
+      opacity: 0;
+    }
+
+    .hero-bg.loaded {
+      filter: grayscale(20%) brightness(0.8);
+      opacity: 1;
+    }
+
+    .main-title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+      text-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      margin-bottom: 20px;
+      animation: fadeInUp 1.5s ease-out forwards;
+      max-width: 1200px;
+      padding: 0 20px;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      animation: fadeInUp 2s ease-out 0.5s forwards;
+      opacity: 0;
+    }
+
+    .scroll-indicator span {
+      font-size: 1.75rem;
+      opacity: 0.8;
+      margin-bottom: 10px;
+      letter-spacing: 1.2px;
+      transition: all 0.3s ease; /* 添加过渡动画 */
+    }
+    .scroll-icon {
+      width: 40px;
+      height: 40px;
+      animation: arrowBounce 2s infinite ease-in-out;
+      opacity: 0.9;
+    }
+
+    @keyframes arrowBounce {
+      0%, 100% { transform: translateY(0); opacity: 0.9; }
+      50% { transform: translateY(15px); opacity: 0.6; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 顶部导航条 */
+    .chart-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(18, 18, 18, 0.95);
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 209, 102, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .chart-nav.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .chart-nav a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .chart-nav a:hover, .chart-nav a.active {
+      background: var(--primary-color);
+      color: var(--dark-bg);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 209, 102, 0.3);
+    }
+
+    /* 数据分析总结板块样式 */
+    .summary-section {
+      padding: 80px 20px;
+      background: linear-gradient(to bottom, var(--medium-bg), var(--dark-bg));
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    
+    .summary-section::before,
+    .summary-section::after {
+      content: "";
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: var(--primary-color);
+      opacity: 0.08;
+      border-radius: 50%;
+      z-index: 0;
+    }
+    
+    .summary-card {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, rgba(42, 42, 42, 0.6), rgba(65, 65, 65, 0.4));
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 60px 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid rgba(255, 209, 102, 0.1);
+      border-left: 1px solid rgba(255, 209, 102, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+      .summary-card {
+        padding: 40px 25px;
+      }
+    }
+    
+    .summary-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 30px;
+      position: relative;
+      display: inline-block;
+    }
+    
+    .summary-title::after {
+      content: "";
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 2px;
+      background: var(--primary-color);
+      border-radius: 2px;
+    }
+    
+    .summary-text {
+      font-size: 1.25rem;
+      color: var(--text-color);
+      line-height: 1.9;
+      margin-bottom: 24px;
+      text-align: justify;
+    }
+    
+    .summary-text strong {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+    
+    .summary-highlight {
+      margin: 30px 0;
+      padding: 20px;
+      background: rgba(255, 209, 102, 0.05);
+      border-left: 3px solid var(--primary-color);
+      border-radius: 0 12px 12px 0;
+      text-align: left;
+    }
+    
+    .summary-highlight p {
+      font-size: 1.2rem;
+      color: var(--text-color);
+      line-height: 1.8;
+    }
+
+    /* 资料来源板块样式 */
+    .source-section {
+      padding: 80px 20px;
+      background: linear-gradient(to bottom, var(--light-bg), var(--medium-bg));
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .source-section::before,
+    .source-section::after {
+      content: "";
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: var(--primary-color);
+      opacity: 0.03;
+      border-radius: 50%;
+      z-index: 0;
+    }
+    
+    .source-card {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: rgba(42, 42, 42, 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid rgba(255, 209, 102, 0.1);
+      border-left: 1px solid rgba(255, 209, 102, 0.1);
+    }
+    
+    .source-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 30px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .source-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+    }
+    
+    .source-item {
+      background: rgba(65, 65, 65, 0.3);
+      padding: 20px;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+    
+    .source-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 209, 102, 0.2);
+    }
+    
+    .source-icon {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+    }
+    
+    .source-name {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    
+    .source-url {
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: block;
+      transition: color 0.3s ease;
+      word-break: break-all;
+    }
+    
+    .source-url:hover {
+      color: var(--primary-color);
+    }
+
+    /* 页脚导航 */
+    .footer-nav {
+      background: rgba(42, 42, 42, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 209, 102, 0.1);
+      padding: 30px 20px;
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .footer-nav a {
+      display: inline-block;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 10px 25px;
+      margin: 8px;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+      background: rgba(65, 65, 65, 0.6);
+      border: 1px solid rgba(255, 209, 102, 0.1);
+    }
+
+    .footer-nav a:hover {
+      background: var(--primary-color);
+      color: var(--dark-bg);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 209, 102, 0.3);
+    }
+
+    .footer-copyright {
+      margin-top: 20px;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+    }
+
+    /* 响应式设计强化 */
+    @media (max-width: 1200px) {
+      .main-title {
+        font-size: 2.8rem;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .main-title {
+        font-size: 2.2rem;
+      }
+
+      .summary-section, .source-section {
+        padding: 60px 20px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-title {
+        font-size: 1.8rem;
+      }
+
+      .chart-nav {
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 10px;
+      }
+
+      .chart-nav a {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+      }
+
+      .footer-nav a {
+        font-size: 0.9rem;
+        padding: 8px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 开场标题区 -->
+  <div class="title-section" id="titleSection">
+    <img
+      src="https://fastly.picsum.photos/id/221/1440/879.jpg?hmac=-y8GQ4KS-tmCflYwphSLZmsTu-m0rL8U6CldcgLjJoA"
+      alt="上海城市天际线"
+      class="hero-bg"
+    />
+    <h1 class="main-title">从租金到房源</h1>
+    <h1 class="main-title">一份多维数据勾勒上海租房全景</h1>
+    <div class="scroll-indicator" onclick="scrollToSummary()">
+      <span>查看总结</span>
+      <svg class="scroll-icon" width="40" height="40" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5v14M19 12l-7 7-7-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 数据分析总结 -->
+  <section class="summary-section" id="summarySection">
+    <div class="summary-card">
+      <h2 class="summary-title">上海租房市场全景总结</h2>
+      <p class="summary-text">从社交平台上的租房关键词，到图表中展现出的租金结构、地理差异与通勤权衡，上海租房市场呈现出一个资源集中、结构复杂且区域分化明显的生态图景。</p>
+      <p class="summary-text">在租金普遍高于全国水平的背景下，租客们在距离、预算与生活质量之间不断寻求平衡。核心城区房租高企、远郊区域承接需求，中间过渡带形成层级分布，这些都被数据清晰地揭示出来。</p>
+      <div class="summary-text">
+        <p>对于在城市中奔波的租客而言，租房不仅是个人选择，更受制于市场格局与空间结构。通过这些数据图表，我们希望为理解这一系统提供一个更加立体的观察视角。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 资料来源板块 -->
+  <section class="source-section">
+    <div class="source-card">
+      <h3 class="source-title">资料来源</h3>
+      <div class="source-grid">
+        <div class="source-item">
+          <div class="source-icon">🏠</div>
+          <div class="source-name">链家网</div>
+          <a href="https://www.lianjia.com" class="source-url" target="_blank">https://www.lianjia.com</a>
+        </div>
+        <div class="source-item">
+          <div class="source-icon">📈</div>
+          <div class="source-name">全国房价行情网</div>
+          <a href="https://m.creprice.cn/city/sh.html?type=lease" class="source-url" target="_blank">https://m.creprice.cn/city/sh.html?type=lease</a>
+        </div>
+        <div class="source-item">
+          <div class="source-icon">💬</div>
+          <div class="source-name">知乎社交数据</div>
+          <a href="https://www.zhihu.com" class="source-url" target="_blank">https://www.zhihu.com</a>
+        </div>
+        <div class="source-item">
+          <div class="source-icon">🐦</div>
+          <div class="source-name">微博社交数据</div>
+          <a href="https://www.weibo.com" class="source-url" target="_blank">https://www.weibo.com</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚导航 -->
+  <footer class="footer-nav">
+    <a href="index.html">首页</a>
+    <a href="charts.html">租房数据图表</a>
+    <a href="summary.html">租房全景总结</a>
+    <div class="footer-copyright">© 2025 上海租房数据分析项目 | 数据仅供参考</div>
+  </footer>
+
+  <script>
+    // 平滑滚动到总结区域
+    function scrollToSummary() {
+      document.getElementById("summarySection").scrollIntoView({ behavior: "smooth" });
+    }
+
+    // 背景图加载效果
+    document.querySelectorAll('.hero-bg').forEach(img => {
+      if (img.complete) {
+        img.classList.add('loaded');
+      } else {
+        img.addEventListener('load', () => img.classList.add('loaded'));
+      }
+    });
+
+    // 导航条显示控制
+    const nav = document.querySelector('.chart-nav');
+    const firstSummarySection = document.getElementById('summarySection');
+
+    function updateNavVisibility() {
+      const summarySectionTop = firstSummarySection.getBoundingClientRect().top;
+      
+      if (summarySectionTop <= window.innerHeight - 100) {
+        nav.classList.add('visible');
+      } else {
+        nav.classList.remove('visible');
+      }
+    }
+
+    // 导航条滚动效果
+    let lastScrollTop = 0;
+    
+    function handleScrollEffects() {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      
+      if (scrollTop > 100 && nav.classList.contains('visible')) {
+        nav.style.padding = '8px 0';
+        nav.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+      } else {
+        nav.style.padding = '12px 0';
+        nav.style.boxShadow = 'none';
+      }
+      
+      lastScrollTop = scrollTop;
+    }
+
+    // 元素进入视口动画
+    const animateOnScroll = () => {
+      const elements = document.querySelectorAll('.summary-card, .source-card');
+      
+      elements.forEach(element => {
+        const elementTop = element.getBoundingClientRect().top;
+        const elementVisible = 150;
+        
+        if (elementTop < window.innerHeight - elementVisible) {
+          element.style.opacity = '1';
+          element.style.transform = 'translateY(0)';
+        }
+      });
+    };
+
+    // 高亮当前页面的导航链接
+    function highlightCurrentPage() {
+      const currentPath = window.location.pathname;
+      const links = document.querySelectorAll('.footer-nav a');
+      
+      links.forEach(link => {
+        const linkPath = link.getAttribute('href');
+        if (currentPath.includes(linkPath)) {
+          link.classList.add('active');
+        }
+      });
+    }
+
+    // 初始调用和滚动事件监听
+    updateNavVisibility();
+    handleScrollEffects();
+    animateOnScroll();
+    highlightCurrentPage();
+    
+    window.addEventListener('scroll', () => {
+      updateNavVisibility();
+      handleScrollEffects();
+      animateOnScroll();
+    });
+  </script>
+</body>
+</html>

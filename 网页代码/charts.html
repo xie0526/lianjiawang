@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>上海租房图表分析</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
+    :root {
+      --primary-color: #ffd166;
+      --secondary-color: #ef476f;
+      --dark-bg: #121212;
+      --medium-bg: #2a2a2a;
+      --light-bg: #414141;
+      --text-color: #eaeaea;
+      --accent-color: #06d6a0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+      background-color: var(--dark-bg);
+      color: var(--text-color);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* 开场标题区 */
+    .title-section {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .hero-bg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      filter: grayscale(40%) brightness(0.7);
+      transition: filter 1.8s ease, opacity 1.8s ease;
+      opacity: 0;
+    }
+
+    .hero-bg.loaded {
+      filter: grayscale(20%) brightness(0.8);
+      opacity: 1;
+    }
+
+    .main-title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+      text-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      margin-bottom: 20px;
+      animation: fadeInUp 1.5s ease-out forwards;
+      max-width: 1200px;
+      padding: 0 20px;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      animation: fadeInUp 2s ease-out 0.5s forwards;
+      opacity: 0;
+    }
+    .scroll-indicator span {
+      font-size: 1.75rem;
+      opacity: 0.8;
+      margin-bottom: 10px;
+      letter-spacing: 1.2px;
+      transition: all 0.3s ease; /* 添加过渡动画 */
+    }
+
+    .scroll-icon {
+      width: 40px;
+      height: 40px;
+      animation: arrowBounce 2s infinite ease-in-out;
+      opacity: 0.9;
+    }
+
+    @keyframes arrowBounce {
+      0%, 100% { transform: translateY(0); opacity: 0.9; }
+      50% { transform: translateY(15px); opacity: 0.6; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 顶部导航条 */
+    .chart-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(18, 18, 18, 0.95);
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 209, 102, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .chart-nav.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .chart-nav a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .chart-nav a:hover, .chart-nav a.active {
+      background: var(--primary-color);
+      color: var(--dark-bg);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 209, 102, 0.3);
+    }
+
+    /* 过渡区域 */
+    .transition-section {
+      padding: 80px 20px;
+      background-color: #2a2a2a;
+      position: relative;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .transition-section::before,
+    .transition-section::after {
+      content: "";
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: var(--accent-color);
+      opacity: 0.05;
+      border-radius: 50%;
+      z-index: 0;
+    }
+
+    .transition-content {
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .transition-text {
+      font-size: 1.3rem;
+      color: var(--text-color);
+      line-height: 1.8;
+      margin-bottom: 24px;
+      text-align: justify;
+    }
+
+    .transition-highlight {
+      margin: 40px 0;
+      padding: 20px;
+      background-color: rgba(42, 42, 42, 0.5);
+      border-radius: 12px;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+
+    .transition-highlight p {
+      font-size: 1.2rem;
+      color: var(--text-color);
+      line-height: 1.8;
+      text-align: center;
+    }
+
+    /* 图表区块通用样式 */
+    .chart-section {
+      padding: 60px 20px 90px;
+      background-color: var(--dark-bg); 
+      position: relative;
+    }
+
+    .chart-section:nth-child(odd) {
+      background-color: var(--medium-bg);
+    }
+
+    .chart-section::before, .chart-section::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      background: var(--accent-color);
+      opacity: 0.05;
+      border-radius: 50%;
+    }
+
+    .chart-section:nth-child(odd)::before, .chart-section:nth-child(odd)::after {
+      background: var(--secondary-color);
+    }
+
+    .chart-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 60px;
+      text-align: center;
+      position: relative;
+      display: inline-block;
+    }
+
+    .chart-title::after {
+      content: "";
+      position: absolute;
+      bottom: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 3px;
+      background: var(--primary-color);
+      border-radius: 3px;
+    }
+
+    /* 地铁距离与房源关系图表专用布局 */
+    .metro-chart-container {
+      max-width: 1800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .metro-chart-content {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    @media (min-width: 768px) {
+      .metro-chart-content {
+        flex-direction: row;
+      }
+    }
+
+    .metro-chart-visual {
+      flex: 1.8;
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+    }
+
+    .metro-chart-visual::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.05) 0%, transparent 50%, rgba(239, 71, 111, 0.05) 100%);
+      z-index: -1;
+    }
+
+    .metro-chart-visual iframe {
+      border: none;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      box-shadow: 0 12px 50px rgba(0, 0, 0, 0.6);
+      transition: all 0.4s ease;
+      min-height: 500px;
+    }
+
+    .metro-chart-visual iframe:hover {
+      transform: scale(1.01);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.7);
+    }
+
+    .metro-chart-text {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .metro-chart-text p {
+      font-size: 1.2rem;
+      color: var(--text-color);
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+
+    /* 热门房源区域分布图表专用布局 */
+    .hotspots-chart-container {
+      max-width: 1800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hotspots-chart-content {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    @media (min-width: 768px) {
+      .hotspots-chart-content {
+        flex-direction: row;
+      }
+    }
+
+    .hotspots-chart-text {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .hotspots-chart-text p {
+      font-size: 1.2rem;
+      color: var(--text-color);
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+
+    .hotspots-chart-visual {
+      flex: 1.8;
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+    }
+
+    .hotspots-chart-visual::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(6, 214, 160, 0.05) 0%, transparent 50%, rgba(255, 209, 102, 0.05) 100%);
+      z-index: -1;
+    }
+
+    .hotspots-chart-visual iframe {
+      border: none;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      box-shadow: 0 12px 50px rgba(0, 0, 0, 0.6);
+      transition: all 0.4s ease;
+      min-height: 500px;
+    }
+
+    /* 其他图表通用布局 */
+    .standard-chart-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 60px;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .standard-chart-container:nth-child(even) {
+      flex-direction: row-reverse;
+    }
+
+    .standard-chart-text {
+      flex: 1 1 45%;
+      min-width: 300px;
+      padding: 20px;
+    }
+
+    .standard-chart-text p {
+      font-size: 1.2rem;
+      color: var(--text-color);
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+
+    .standard-chart-visual {
+      flex: 1 0 50%;
+      min-width: 300px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .standard-chart-visual iframe {
+      border: none;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+      overflow: hidden;
+      object-fit: contain;
+      min-height: 300px;
+    }
+
+    /* 页脚导航 */
+    .footer-nav {
+      background: rgba(42, 42, 42, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 209, 102, 0.1);
+      padding: 30px 20px;
+      text-align: center;
+      margin-top: 80px;
+    }
+
+    .footer-nav a {
+      display: inline-block;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 10px 25px;
+      margin: 8px;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+      background: rgba(65, 65, 65, 0.6);
+      border: 1px solid rgba(255, 209, 102, 0.1);
+    }
+
+    .footer-nav a:hover {
+      background: var(--primary-color);
+      color: var(--dark-bg);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 209, 102, 0.3);
+    }
+
+    .footer-copyright {
+      margin-top: 20px;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+    }
+
+    /* 响应式设计强化 */
+    @media (max-width: 1200px) {
+      .main-title {
+        font-size: 2.8rem;
+      }
+      .metro-chart-visual, .hotspots-chart-visual {
+        min-height: 450px;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .wordcloud-title, .chart-title {
+        font-size: 1.8rem;
+      }
+
+      .wordcloud-visual, .standard-chart-visual, .metro-chart-visual, .hotspots-chart-visual {
+        aspect-ratio: 4/3;
+      }
+
+      .metro-chart-visual, .hotspots-chart-visual {
+        min-height: 400px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .interview-section, .wordcloud-section, .chart-section {
+        padding: 80px 20px 60px;
+      }
+
+      .main-title {
+        font-size: 2.2rem;
+      }
+
+      .wordcloud-title, .chart-title {
+        font-size: 1.5rem;
+      }
+
+      .wordcloud-container, .standard-chart-container, .metro-chart-content, .hotspots-chart-content {
+        flex-direction: column !important;
+      }
+
+      .wordcloud-visual, .standard-chart-visual, .metro-chart-visual, .hotspots-chart-visual {
+        width: 100%;
+        aspect-ratio: 3/2;
+        min-height: 0;
+      }
+
+      .chart-nav {
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 10px;
+      }
+
+      .chart-nav a {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+      }
+
+      .footer-nav a {
+        font-size: 0.9rem;
+        padding: 8px 20px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .main-title {
+        font-size: 1.8rem;
+      }
+
+      .wordcloud-visual, .standard-chart-visual, .metro-chart-visual, .hotspots-chart-visual {
+        aspect-ratio: 16/9;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 开场标题区 -->
+  <div class="title-section" id="titleSection">
+    <img
+      src="https://picsum.photos/id/1075/1920/1080"
+      alt="上海城市天际线"
+      class="hero-bg"
+    />
+    <h1 class="main-title">从租金到房源</h1>
+    <h1 class="main-title">一份多维数据勾勒上海租房全景</h1>
+    <div class="scroll-indicator" onclick="scrollToTransition()">
+      <span>探索数据</span>
+      <svg class="scroll-icon" width="40" height="40" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5v14M19 12l-7 7-7-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 顶部导航条 -->
+  <nav class="chart-nav" id="chartNav">
+    <a href="#chart1">房租走势</a>
+    <a href="#chart2">沪租结构</a>
+    <a href="#chart3">区租差异</a>
+    <a href="#chart4">房源分布</a>
+    <a href="#chart5">房源朝向</a>
+  </nav>
+
+  <!-- 新增的过渡区域 -->
+  <section class="transition-section" id="transitionSection">
+    <div class="transition-content">
+      <div class="transition-text">
+        在词云图部分，我们通过社交平台的关键词分析，勾勒出了上海租房的热门话题与租客们的核心关注点。
+      </div>
+      <div class="transition-text">
+        然而，文字与关键词所描绘的图景不够具体。要真正了解上海租房市场的情况，我们观察更具体的数据，进行更深入的分析。接下来，我们将通过五组图表，从房租走势、沪租结构、区租差异、房源分布和房源朝向多个维度出发，呈现一个更加立体、更加精准的上海租房市场全景图。
+      </div>
+    </div>
+  </section>
+
+  <!-- 图表区块1：全国房租中位数走势分析 -->
+  <section id="chart1" class="chart-section">
+    <h2 class="chart-title">房租走势</h2>
+    <div class="standard-chart-container">
+      <div class="standard-chart-text">
+        <p>全国房租中位数走势分析呈现 2024年5月-2025年月全国房租中位数走势。前两月（2024年5-7月），房租中位数稳定在1900元 / 月 ，租赁市场供需关系相对平衡，未出现明显波动。但2024年7-9月，受毕业季租客需求骤降、保障性租赁住房集中供应等因素冲击，市场供应过剩，房租中位数快速滑落至1800元 / 月。</p>
+        <p>进入2024年9月-2025年1月传统租房淡季，需求持续疲软，房租中位数在1800元 / 月低位徘徊 ，供需短暂达成新平衡。而2025年1-5月，春节后求职潮带来需求小高峰，价格随之小幅震荡；5 月夏季租房需求预热，推动中位数再度回升。</p>
+      </div>
+      <div class="standard-chart-visual">
+        <iframe src="全国房租变化图/index.html" loading="lazy" title="上海租金分布图"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- 图表区块2：沪租结构 -->
+  <section id="chart2" class="chart-section">
+    <h2 class="chart-title">沪租结构</h2>
+    <div class="standard-chart-container">
+      <div class="standard-chart-visual" data-aspect-ratio="4/3">
+        <iframe src="上海2025.5.月租数据图/index.html" loading="lazy" title="上海租客画像图"></iframe>
+      </div>
+      <div class="standard-chart-text">
+        <p>这张饼图展现上海各租金区间房源数量占比。可以看到，月租≥4500-5500 元占比19.79% 、≥5500 元占比37，92%，而月租＜1500 元的低价房源仅占 2.06% 。</p>
+        <p>对比全国房租中位数走势（2024 年 5 月 - 2025 年 5 月在 1800 - 1900 元区间波动 ），上海租赁市场呈现明显的 “高价化” 结构，反映出一线城市租房成本与全国平均水平的差异。</p>
+        <p>但也可能是因为该饼图的数据来源于链家网，链家网的租房房源多为整租，价格会更高，但在一定程度上也能反映出上海租赁房子的价位更高。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 图表区块3：区租差异 -->
+  <section id="chart3" class="chart-section">
+    <h2 class="chart-title">区租差异</h2>
+    <div class="metro-chart-container">
+      <div class="metro-chart-content">
+        <div class="metro-chart-visual" data-aspect-ratio="16/9">
+          <iframe src="上海2025.5价格/元/月/index.html" loading="lazy" title="地铁距离与房源关系图"></iframe>
+        </div>
+        <div class="metro-chart-text">
+          <p>从左图我们可以了解到，黄浦区以153.35元/月/㎡ 登顶，长宁区（140.24元/月/㎡ ）、静安区（131.14元/月/㎡ ）紧随其后，核心城区凭借地段、配套优势，构建起高租金梯队。徐汇区、虹口区等区域，租金在 120 - 130元/月/㎡区间，延续着内环沿线的价值韧性；杨浦区、普陀区等稍外围城区，虽有回落，但117 - 122元/月/㎡的水平，仍与核心区形成梯度衔接。</p>
+          <p>浦东作为经济强区，租金106.8元/月/㎡ ，展现出产业与居住需求的博弈；而闵行、宝山等近郊区，88元/月/㎡左右的租金，成为 “外溢需求” 的承接带。当视线转向远郊，青浦、松江 70 元/月/㎡上下的租金，奉贤 31.84元/月/㎡ 、崇明与金山 27元/月/㎡出头的 “洼地”，则勾勒出上海从中心到远郊的租金衰减曲线。</p>
+          <p>这种地域分化，是城市发展格局即核心区资源集聚、远郊区配套待完善的映射。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 图表区块4：房源热区 -->
+  <section id="chart4" class="chart-section">
+    <h2 class="chart-title">房源分布</h2>
+    <div class="hotspots-chart-container">
+      <div class="hotspots-chart-content">
+        <div class="hotspots-chart-text">
+          <p>浦东新区以28.7%的房源占数据显示，浦东新区以13792 套房源位居榜首，远超其他区域；闵行区（6848 套）、宝山区（4133 套）等近郊区紧随其后；而崇明区（456 套）、金山区（478 套）等远郊区房源量不足 500 套，形成明显地域差异。</p>
+          <p>地图模式下，浦东因房源密集呈现深色调，远郊区域则以浅色调显示，直观呈现 “核心区 - 近郊区 - 远郊” 的房源衰减梯度。</p>
+        </div>
+        <div class="hotspots-chart-visual" data-aspect-ratio="4/3">
+          <iframe src="上海2025.5行政区租房房源数量地图/2025年5月链家上海各区租房房源数量 .html" loading="lazy" title="上海房源热区分布图"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 图表区块5：房源朝向 -->
+  <section id="chart5" class="chart-section">
+    <h2 class="chart-title">房源朝向</h2>
+    <div class="standard-chart-container">
+      <div class="standard-chart-text">
+        <p>这张柱状图，聚焦上海租房市场不同方位的房源数量分布。数据显示，“南北”“南” 两大方位，以近 5 万、超 4.8 万的房源量 “领跑”，“北” 方位房源量约 1 万，“西”“东” 则以 “低位数值” 垫底，直观呈现上海租房市场在方位维度上的房源分布差异。</p>
+      </div>
+      <div class="standard-chart-visual" data-aspect-ratio="16/9">
+        <iframe src="上海2025房子朝向分布/index.html" loading="lazy" title="上海近年租金变化趋势图"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚导航 -->
+  <footer class="footer-nav">
+    <a href="index.html">首页</a>
+    <a href="charts.html">租房数据图表</a>
+    <a href="summary.html">租房全景总结</a>
+    <div class="footer-copyright">© 2025 上海租房数据分析项目 | 数据仅供参考</div>
+  </footer>
+
+  <script>
+    // 平滑滚动到过渡区域
+    function scrollToTransition() {
+      document.getElementById("transitionSection").scrollIntoView({ behavior: "smooth" });
+    }
+
+    // 背景图加载效果
+    document.querySelectorAll('.hero-bg').forEach(img => {
+      if (img.complete) {
+        img.classList.add('loaded');
+      } else {
+        img.addEventListener('load', () => img.classList.add('loaded'));
+      }
+    });
+
+    // 导航条显示控制
+    const nav = document.querySelector('.chart-nav');
+    const firstChartSection = document.getElementById('chart1');
+
+    function updateNavVisibility() {
+      const chartSectionTop = firstChartSection.getBoundingClientRect().top;
+      
+      if (chartSectionTop <= window.innerHeight - 100) {
+        nav.classList.add('visible');
+      } else {
+        nav.classList.remove('visible');
+      }
+    }
+
+    // 图表导航滚动高亮
+    const sections = document.querySelectorAll('.chart-section');
+    const navLinks = document.querySelectorAll('.chart-nav a');
+
+    function updateActiveLink() {
+      let scrollPosition = window.scrollY + window.innerHeight / 2;
+      let targetIndex = -1;
+
+      sections.forEach((section, index) => {
+        const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+        const sectionHeight = section.offsetHeight;
+        
+        if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+          targetIndex = index;
+        }
+      });
+
+      navLinks.forEach(link => link.classList.remove('active'));
+      if (targetIndex >= 0 && targetIndex < navLinks.length) {
+        navLinks[targetIndex].classList.add('active');
+      }
+    }
+
+    // 导航条滚动效果
+    let lastScrollTop = 0;
+    
+    function handleScrollEffects() {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      
+      if (scrollTop > 100 && nav.classList.contains('visible')) {
+        nav.style.padding = '8px 0';
+        nav.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+      } else {
+        nav.style.padding = '12px 0';
+        nav.style.boxShadow = 'none';
+      }
+      
+      lastScrollTop = scrollTop;
+    }
+
+    // 元素进入视口动画
+    const animateOnScroll = () => {
+      const elements = document.querySelectorAll('.standard-chart-container > div, .metro-chart-content > div, .hotspots-chart-content > div');
+      
+      elements.forEach(element => {
+        const elementTop = element.getBoundingClientRect().top;
+        const elementVisible = 150;
+        
+        if (elementTop < window.innerHeight - elementVisible) {
+          element.style.opacity = '1';
+          element.style.transform = 'translateY(0)';
+        }
+      });
+    };
+
+    // 动态设置图表容器高度
+    function setChartHeights() {
+      const standardVisuals = document.querySelectorAll('.standard-chart-visual');
+      standardVisuals.forEach(visual => {
+        const aspectRatioAttr = visual.getAttribute('data-aspect-ratio') || '16/9';
+        setVisualHeight(visual, aspectRatioAttr);
+      });
+      
+      const metroVisual = document.querySelector('.metro-chart-visual');
+      if (metroVisual) {
+        const aspectRatioAttr = metroVisual.getAttribute('data-aspect-ratio') || '16/9';
+        setVisualHeight(metroVisual, aspectRatioAttr);
+      }
+      
+      const hotspotsVisual = document.querySelector('.hotspots-chart-visual');
+      if (hotspotsVisual) {
+        const aspectRatioAttr = hotspotsVisual.getAttribute('data-aspect-ratio') || '4/3';
+        setVisualHeight(hotspotsVisual, aspectRatioAttr);
+      }
+    }
+    
+    function setVisualHeight(visual, aspectRatioStr) {
+      const container = visual;
+      const actualWidth = container.offsetWidth;
+      
+      const [widthRatio, heightRatio] = aspectRatioStr.split('/').map(Number);
+      const calculatedHeight = (actualWidth * heightRatio / widthRatio) + 20;
+      visual.style.height = `${calculatedHeight}px`;
+      
+      const iframe = visual.querySelector('iframe');
+      if (iframe) {
+        iframe.style.height = `${calculatedHeight}px`;
+        if (iframe.contentWindow) {
+          iframe.contentWindow.dispatchEvent(new Event('resize'));
+        }
+      }
+    }
+
+    // 高亮当前页面的导航链接
+    function highlightCurrentPage() {
+      const currentPath = window.location.pathname;
+      const links = document.querySelectorAll('.footer-nav a');
+      
+      links.forEach(link => {
+        const linkPath = link.getAttribute('href');
+        if (currentPath.includes(linkPath)) {
+          link.classList.add('active');
+        }
+      });
+    }
+
+    // 初始调用和滚动事件监听
+    updateNavVisibility();
+    updateActiveLink();
+    handleScrollEffects();
+    animateOnScroll();
+    setChartHeights();
+    highlightCurrentPage();
+    
+    window.addEventListener('scroll', () => {
+      updateNavVisibility();
+      updateActiveLink();
+      handleScrollEffects();
+      animateOnScroll();
+    });
+    
+    window.addEventListener('resize', setChartHeights);
+    window.addEventListener('load', setChartHeights);
+  </script>
+</body>
+</html>
