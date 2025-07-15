@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>从租金到房源：一份多维数据勾勒上海租房全景</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
+    :root {
+      --primary-color: #ffd166;
+      --secondary-color: #ef476f;
+      --dark-bg: #121212;
+      --medium-bg: #2a2a2a;
+      --light-bg: #414141;
+      --text-color: #eaeaea;
+      --accent-color: #06d6a0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+      background-color: var(--dark-bg);
+      color: var(--text-color);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* 顶部导航条 */
+    .chart-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(18, 18, 18, 0.95);
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 209, 102, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .chart-nav.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .chart-nav a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .chart-nav a:hover, .chart-nav a.active {
+      background: var(--primary-color);
+      color: var(--dark-bg);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 209, 102, 0.3);
+    }
+
+    /* 开场标题区 */
+    .title-section {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .hero-bg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      filter: grayscale(40%) brightness(0.7);
+      transition: filter 1.8s ease, opacity 1.8s ease;
+      opacity: 0;
+    }
+
+    .hero-bg.loaded {
+      filter: grayscale(20%) brightness(0.8);
+      opacity: 1;
+    }
+
+    .main-title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+      text-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      margin-bottom: 20px;
+      animation: fadeInUp 1.5s ease-out forwards;
+      max-width: 1200px;
+      padding: 0 20px;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      animation: fadeInUp 2s ease-out 0.5s forwards;
+      opacity: 0;
+    }
+
+    .scroll-indicator span {
+      font-size: 1.75rem;
+      opacity: 0.8;
+      margin-bottom: 10px;
+      letter-spacing: 1.2px;
+      transition: all 0.3s ease; /* 添加过渡动画 */
+    }
+
+    .scroll-icon {
+      width: 40px;
+      height: 40px;
+      animation: arrowBounce 2s infinite ease-in-out;
+      opacity: 0.9;
+    }
+
+    @keyframes arrowBounce {
+      0%, 100% { transform: translateY(0); opacity: 0.9; }
+      50% { transform: translateY(15px); opacity: 0.6; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 采访段落 */
+    .interview-section {
+      padding: 120px 20px 80px;
+      background: linear-gradient(to bottom, var(--medium-bg), var(--light-bg));
+      position: relative;
+      overflow: hidden;
+    }
+
+    .interview-section::before, .interview-section::after {
+      content: "";
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: var(--primary-color);
+      opacity: 0.05;
+      border-radius: 50%;
+      z-index: 0;
+    }
+
+    .interview-subtitle {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 40px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .interview-block {
+      max-width: 900px;
+      margin: 0 auto;
+      background-color: rgba(42, 42, 42, 0.7);
+      padding: 50px;
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(218, 213, 213, 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 1;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .interview-block:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(218, 213, 213, 0.4);
+    }
+
+    .interview-text {
+      font-size: 1.2rem;
+      color: var(--text-color);
+      margin-bottom: 24px;
+      animation: fadeIn 0.8s ease-out forwards;
+      letter-spacing: 0.5px;
+      line-height: 1.9;
+      position: relative;
+      z-index: 1;
+    }
+
+    .interview-text:nth-child(2) { animation-delay: 0.1s; }
+    .interview-text:nth-child(3) { animation-delay: 0.2s; }
+    .interview-text:nth-child(4) { animation-delay: 0.3s; }
+
+    .interviewee-info {
+      font-weight: 500;
+      font-size: 1.1rem;
+      color: #fff;
+      border-left: 4px solid var(--primary-color);
+      padding-left: 20px;
+      margin-top: 30px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .interviewee-info img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--primary-color);
+    }
+
+    /* 词云图部分 */
+    .wordcloud-section {
+      padding: 100px 20px 80px;
+      background-color: var(--dark-bg);
+      position: relative;
+    }
+
+    .wordcloud-section::before, .wordcloud-section::after {
+      content: "";
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      background: var(--secondary-color);
+      opacity: 0.05;
+      border-radius: 50%;
+    }
+
+    .wordcloud-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 50px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .wordcloud-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 60px;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .wordcloud-text {
+      flex: 1 1 45%;
+      min-width: 300px;
+      padding: 20px;
+    }
+
+    .wordcloud-text p {
+      font-size: 1.2rem;
+      color: var(--text-color);
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+
+    .wordcloud-text p strong {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .wordcloud-visual {
+      flex: 1 1 50%;
+      min-width: 300px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wordcloud-visual::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(255, 209, 102, 0.1), transparent);
+      border-radius: 16px;
+      z-index: -1;
+    }
+
+    .wordcloud-visual iframe {
+      border: none;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+      overflow: hidden;
+      object-fit: contain;
+    }
+
+    .wordcloud-visual iframe:hover {
+      transform: scale(1.02);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    /* 页脚导航 */
+    .footer-nav {
+      background: rgba(42, 42, 42, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 209, 102, 0.1);
+      padding: 30px 20px;
+      text-align: center;
+      margin-top: 80px;
+    }
+
+    .footer-nav a {
+      display: inline-block;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 10px 25px;
+      margin: 8px;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+      background: rgba(65, 65, 65, 0.6);
+      border: 1px solid rgba(255, 209, 102, 0.1);
+    }
+
+    .footer-nav a:hover {
+      background: var(--primary-color);
+      color: var(--dark-bg);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 209, 102, 0.3);
+    }
+
+    .footer-copyright {
+      margin-top: 20px;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+    }
+
+    /* 响应式设计强化 */
+    @media (max-width: 1200px) {
+      .main-title {
+        font-size: 2.8rem;
+      }
+
+      .interview-subtitle, .wordcloud-title {
+        font-size: 1.8rem;
+      }
+
+      .interview-block {
+        padding: 30px;
+      }
+
+      .wordcloud-visual {
+        aspect-ratio: 4/3;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .main-title {
+        font-size: 2.2rem;
+      }
+
+      .interview-section, .wordcloud-section {
+        padding: 80px 20px 60px;
+      }
+
+      .interview-subtitle, .wordcloud-title {
+        font-size: 1.5rem;
+      }
+
+      .interview-text {
+        font-size: 1.1rem;
+      }
+
+      .wordcloud-container {
+        flex-direction: column !important;
+      }
+
+      .wordcloud-visual {
+        width: 100%;
+        aspect-ratio: 3/2;
+        min-height: 0;
+      }
+
+      .chart-nav {
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 10px;
+      }
+
+      .chart-nav a {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+      }
+
+      .footer-nav a {
+        font-size: 0.9rem;
+        padding: 8px 20px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .main-title {
+        font-size: 1.8rem;
+      }
+
+      .interview-block {
+        padding: 25px;
+      }
+
+      .wordcloud-visual {
+        aspect-ratio: 16/9;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部导航条 -->
+  <nav class="chart-nav" id="chartNav">
+    <a href="charts.html#chart1">房租走势</a>
+    <a href="charts.html#chart2">沪租结构</a>
+    <a href="charts.html#chart3">区租差异</a>
+    <a href="charts.html#chart4">房源分布</a>
+    <a href="charts.html#chart5">房源朝向</a>
+  </nav>
+
+  <!-- 开场标题区 -->
+  <div class="title-section" id="titleSection">
+    <img
+      src="https://picsum.photos/id/1067/1920/1080"
+      alt="上海城市天际线"
+      class="hero-bg"
+    />
+    <h1 class="main-title">从租金到房源</h1>
+    <h1 class="main-title">一份多维数据勾勒上海租房全景</h1>
+    <div class="scroll-indicator" onclick="scrollToInterview()">
+      <span>了解租房</span>
+      <svg class="scroll-icon" width="40" height="40" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5v14M19 12l-7 7-7-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 采访段落（移至图表之前） -->
+  <section class="interview-section" id="interviewSection">
+    <h2 class="interview-subtitle">一位大三实习生的1580元租金与60分钟通勤</h2>
+    <div class="interview-block">
+      <p class="interview-text">厦门大学金融学专业的大三学生小斌，住在上海宝山区共富二村的老旧小区内，与陌生人合租一套三室住房。</p>
+      <p class="interview-text">房间约10平方米，放下一张床和桌子几乎无余地。租金1580元，押一付一，是他能承受的范围。</p>
+      <p class="interview-text">他每天早上7点出门，通勤60分钟前往人民广场的实习公司。每周通勤时间相当于一整天。</p>
+      <p class="interview-text">“选这为租金低于市中心，能减轻经济负担”，通勤时他还会利用时间备考雅思，让摇晃的60分钟不止于发呆刷手机。</p>
+      <div class="interviewee-info">
+        <div>
+          <div>小斌</div>
+          <div>厦门大学金融学专业大三学生</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 词云图部分 -->
+  <section class="wordcloud-section" id="wordcloudSection">
+    <h2 class="wordcloud-title">微博知乎关于“上海租房”的词云图</h2>
+    <div class="wordcloud-container">
+      <div class="wordcloud-text">
+        <p>当提起上海租房，我们会想到什么？是社交关键词词云图里高频出现的<strong>"房源"</strong>、<strong>"房东"</strong>，还是像小斌这样，在租金与通勤间权衡的租客日常？</p>
+        <p>这些关键词不仅是网络讨论的热点，更是千万租客在上海这座城市里，寻找安身之所时的真实关注点。从词云图中我们可以看到，<strong>"房子"</strong>、<strong>"兼职"</strong> 占据核心位置，而 <strong>"燃气"</strong>、<strong>"地铁站"</strong>、<strong>"合租"</strong> 等则反映了租房具体需求。</p>
+        <p><strong>“小区”</strong> 关联居住环境，<strong>“燃气”</strong>、<strong>“厨卫”</strong> 涉及生活设施；<strong>“工作”</strong>、<strong>“兼职”</strong>、<strong>“收入” </strong>则把租房和个人经济、工作状态挂钩，侧面反映租客生活压力与规划 。 整体呈现出上海租房围绕房源、交通、成本及生活关联的复杂生态。</p>
+      </div>
+      <div class="wordcloud-visual" data-aspect-ratio="16/9">
+        <iframe src="wordcloudcharts/weibozhihu-wordcloud.html" loading="lazy" title="微博知乎关于上海租房词云"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚导航 -->
+  <footer class="footer-nav">
+    <a href="index.html">首页</a>
+    <a href="charts.html">租房数据图表</a>
+    <a href="summary.html">租房全景总结</a>
+    <div class="footer-copyright">© 2025 上海租房数据分析项目</div>
+  </footer>
+
+  <script>
+    // 平滑滚动到采访部分
+    function scrollToInterview() {
+      document.getElementById("interviewSection").scrollIntoView({ behavior: "smooth" });
+    }
+
+    // 背景图加载效果
+    document.querySelectorAll('.hero-bg').forEach(img => {
+      if (img.complete) {
+        img.classList.add('loaded');
+      } else {
+        img.addEventListener('load', () => img.classList.add('loaded'));
+      }
+    });
+
+    // 导航条显示控制
+    const nav = document.querySelector('.chart-nav');
+    const firstChartSection = document.getElementById('chart1');
+
+    function updateNavVisibility() {
+      const chartSectionTop = firstChartSection ? firstChartSection.getBoundingClientRect().top : window.innerHeight;
+      
+      if (chartSectionTop <= window.innerHeight - 100) {
+        nav.classList.add('visible');
+      } else {
+        nav.classList.remove('visible');
+      }
+    }
+
+    // 导航条滚动效果
+    let lastScrollTop = 0;
+    
+    function handleScrollEffects() {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      
+      if (scrollTop > 100 && nav.classList.contains('visible')) {
+        nav.style.padding = '8px 0';
+        nav.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+      } else {
+        nav.style.padding = '12px 0';
+        nav.style.boxShadow = 'none';
+      }
+      
+      lastScrollTop = scrollTop;
+    }
+
+    // 元素进入视口动画
+    const animateOnScroll = () => {
+      const elements = document.querySelectorAll('.interview-block, .wordcloud-container > div');
+      
+      elements.forEach(element => {
+        const elementTop = element.getBoundingClientRect().top;
+        const elementVisible = 150;
+        
+        if (elementTop < window.innerHeight - elementVisible) {
+          element.style.opacity = '1';
+          element.style.transform = 'translateY(0)';
+        }
+      });
+    };
+
+    // 动态设置图表容器高度
+    function setChartHeights() {
+      const standardVisuals = document.querySelectorAll('.wordcloud-visual');
+      standardVisuals.forEach(visual => {
+        const aspectRatioAttr = visual.getAttribute('data-aspect-ratio') || '16/9';
+        setVisualHeight(visual, aspectRatioAttr);
+      });
+    }
+    
+    function setVisualHeight(visual, aspectRatioStr) {
+      const container = visual;
+      const actualWidth = container.offsetWidth;
+      
+      const [widthRatio, heightRatio] = aspectRatioStr.split('/').map(Number);
+      const calculatedHeight = (actualWidth * heightRatio / widthRatio) + 20;
+      visual.style.height = `${calculatedHeight}px`;
+      
+      const iframe = visual.querySelector('iframe');
+      if (iframe) {
+        iframe.style.height = `${calculatedHeight}px`;
+        if (iframe.contentWindow) {
+          iframe.contentWindow.dispatchEvent(new Event('resize'));
+        }
+      }
+    }
+
+    // 高亮当前页面的导航链接
+    function highlightCurrentPage() {
+      const currentPath = window.location.pathname;
+      const links = document.querySelectorAll('.footer-nav a');
+      
+      links.forEach(link => {
+        const linkPath = link.getAttribute('href');
+        if (currentPath.includes(linkPath)) {
+          link.classList.add('active');
+        }
+      });
+    }
+
+    // 初始调用和滚动事件监听
+    updateNavVisibility();
+    handleScrollEffects();
+    animateOnScroll();
+    setChartHeights();
+    highlightCurrentPage();
+    
+    window.addEventListener('scroll', () => {
+      updateNavVisibility();
+      handleScrollEffects();
+      animateOnScroll();
+    });
+    
+    window.addEventListener('resize', setChartHeights);
+    window.addEventListener('load', setChartHeights);
+  </script>
+</body>
+</html>
